@@ -23,37 +23,61 @@
 
         button {
             position: fixed;
-            bottom: 10px;
             padding: 10px 20px;
             font-size: 16px;
             border-radius: 8px;
             border: none;
             background: #444;
             color: white;
-            margin: 0 5px;
         }
 
         #undo {
+            bottom: 10px;
             left: 10px;
         }
 
         #clear {
+            bottom: 10px;
             right: 10px;
+        }
+
+        #grid {
+            bottom: 60px;
+            left: 10px;
         }
     </style>
 </head>
 
 <body>
-    <button id="clear">クリア</button>
-    <button id="undo">一つ戻る</button>
     <canvas id="board"></canvas>
+    <button id="undo">戻す</button>
+    <button id="clear">全消去</button>
+    <button id="grid">グリッド切替</button>
+
     <script>
         const canvas = document.getElementById("board");
         const ctx = canvas.getContext("2d");
         resize();
-        drawPlaceholder();
 
+        let drawing = false;
         const history = [];
+
+        // グリッド用オフスクリーンキャンバス
+        let gridVisible = false;
+        const gridCanvas = document.createElement("canvas");
+        const gridCtx = gridCanvas.getContext("2d");
+        gridCanvas.width = canvas.width;
+        gridCanvas.height = canvas.height;
+
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            gridCanvas.width = canvas.width;
+            gridCanvas.height = canvas.height;
+            drawGrid();
+            redraw();
+        }
+        window.addEventListener("resize", resize);
 
         function drawPlaceholder() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -64,43 +88,13 @@
             ctx.fillText("落書き帳", canvas.width / 2, canvas.height / 2);
         }
 
-        function save() {
-            history.push(canvas.toDataURL());
-        }
-
-        canvas.addEventListener("touchstart", () => {
-            if (!history.length)
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-            save();
-        });
-
-        document.getElementById("undo").addEventListener("click", () => {
-            if (!history.length) return;
-            const img = new Image();
-            img.src = history.pop();
-            img.onload = () => {
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                ctx.drawImage(img, 0, 0);
-            };
-        });
-
-        document.getElementById("clear").addEventListener("click", () => {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            history.length = 0;
-            drawPlaceholder();
-        });
-
-        let drawing = false;
-
-        function resize() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-        }
-        window.addEventListener("resize", resize);
-
         function start(e) {
             drawing = true;
-
+            // プレイスホルダーを消去
+            if (history.length === 0) {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                if (gridVisible) ctx.drawImage(gridCanvas, 0, 0);
+            }
             ctx.beginPath();
             ctx.moveTo(e.touches[0].clientX, e.touches[0].clientY);
         }
@@ -112,13 +106,77 @@
         }
 
         function end() {
+            if (!drawing) return;
             drawing = false;
             ctx.closePath();
+            save();
         }
+
+        function save() {
+            history.push(canvas.toDataURL());
+        }
+
+        // undo
+        document.getElementById("undo").addEventListener("click", () => {
+            if (history.length === 0) return;
+            const img = new Image();
+            img.src = history.pop();
+            img.onload = () => {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                if (gridVisible) ctx.drawImage(gridCanvas, 0, 0);
+                ctx.drawImage(img, 0, 0);
+                if (history.length === 0) drawPlaceholder();
+            };
+        });
+
+        // clear
+        document.getElementById("clear").addEventListener("click", () => {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            history.length = 0;
+            if (gridVisible) ctx.drawImage(gridCanvas, 0, 0);
+            drawPlaceholder();
+        });
+
+        // grid
+        function drawGrid() {
+            gridCtx.clearRect(0, 0, gridCanvas.width, gridCanvas.height);
+            const spacing = 40;
+            const r = 2;
+            const h = Math.sqrt(3) / 2 * spacing;
+            for (let y = 0; y < gridCanvas.height + spacing; y += h) {
+                for (let x = 0; x < gridCanvas.width + spacing; x += spacing) {
+                    const offset = (Math.round(y / h) % 2) * (spacing / 2);
+                    gridCtx.beginPath();
+                    gridCtx.arc(x + offset, y, r, 0, Math.PI * 2);
+                    gridCtx.fillStyle = "#ccc";
+                    gridCtx.fill();
+                }
+            }
+        }
+
+        function redraw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            if (gridVisible) ctx.drawImage(gridCanvas, 0, 0);
+            if (history.length > 0) {
+                const img = new Image();
+                img.src = history[history.length - 1];
+                img.onload = () => ctx.drawImage(img, 0, 0);
+            } else {
+                drawPlaceholder();
+            }
+        }
+
+        document.getElementById("grid").addEventListener("click", () => {
+            gridVisible = !gridVisible;
+            redraw();
+        });
 
         canvas.addEventListener("touchstart", start);
         canvas.addEventListener("touchmove", draw);
         canvas.addEventListener("touchend", end);
+
+        // 初期表示
+        drawPlaceholder();
     </script>
 </body>
 
