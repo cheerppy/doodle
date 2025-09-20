@@ -44,20 +44,25 @@
 </head>
 
 <body>
-    <div>
-        <p>
-            落書き帳
-            <button id="clear">クリア</button>
-            <button id="undo">一つ戻る</button>
-        </p>
-    </div>
+    <button id="clear">クリア</button>
+    <button id="undo">一つ戻る</button>
     <canvas id="board"></canvas>
     <script>
         const canvas = document.getElementById("board");
         const ctx = canvas.getContext("2d");
         resize();
+        drawPlaceholder();
 
         const history = [];
+
+        function drawPlaceholder() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.font = "bold 32px sans-serif";
+            ctx.fillStyle = "#aaa";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillText("落書き帳", canvas.width / 2, canvas.height / 2);
+        }
 
         function save() {
             history.push(canvas.toDataURL());
@@ -78,6 +83,7 @@
         document.getElementById("clear").addEventListener("click", () => {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             history.length = 0;
+            drawPlaceholder();
         });
 
 
