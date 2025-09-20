@@ -57,7 +57,6 @@
     <script>
         const canvas = document.getElementById("board");
         const ctx = canvas.getContext("2d");
-        resize();
 
         let drawing = false;
         const history = [];
@@ -176,6 +175,7 @@
         canvas.addEventListener("touchend", end);
 
         // 初期表示
+        resize();
         drawPlaceholder();
     </script>
 </body>
