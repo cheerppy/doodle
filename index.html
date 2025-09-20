@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>落書き帳</title>
+    <style>
+        body,
+        html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        canvas {
+            touch-action: none;
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="board"></canvas>
+    <script>
+        const canvas = document.getElementById("board");
+        const ctx = canvas.getContext("2d");
+        resize();
+
+        let drawing = false;
+
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener("resize", resize);
+
+        function start(e) {
+            drawing = true;
+            ctx.beginPath();
+            ctx.moveTo(e.touches[0].clientX, e.touches[0].clientY);
+        }
+
+        function draw(e) {
+            if (!drawing) return;
+            ctx.lineTo(e.touches[0].clientX, e.touches[0].clientY);
+            ctx.stroke();
+        }
+
+        function end() {
+            drawing = false;
+            ctx.closePath();
+        }
+
+        canvas.addEventListener("touchstart", start);
+        canvas.addEventListener("touchmove", draw);
+        canvas.addEventListener("touchend", end);
+    </script>
+</body>
+
+</html>
