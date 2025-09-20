@@ -97,8 +97,12 @@
 
         function start(e) {
             drawing = true;
-            ctx.beginPath();
-            ctx.moveTo(e.touches[0].clientX, e.touches[0].clientY);
+            if (history.length === 0) {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+            }
+        }
+        ctx.beginPath();
+        ctx.moveTo(e.touches[0].clientX, e.touches[0].clientY);
         }
 
         function draw(e) {
